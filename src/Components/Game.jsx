@@ -1,28 +1,28 @@
-import { useState, useEffect } from 'react';
-import "../Game.css"
+import { useState, useEffect } from "react";
+import "../Game.css";
 
 const EMOJI_CATEGORIES = {
-  animals: ['🐶', '🐱', '🐵', '🐰'],
-  food: ['🍕', '🍟', '🍔', '🍩'],
-  sports: ['⚽', '🏀', '🏈', '🎾'],
-  nature: ['🌹', '🌻', '🌴', '🌵'],
-  faces: ['😀', '😎', '🤩', '😍']
+  animals: ["🐶", "🐱", "🐵", "🐰"],
+  food: ["🍕", "🍟", "🍔", "🍩"],
+  sports: ["⚽", "🏀", "🏈", "🎾"],
+  nature: ["🌹", "🌻", "🌴", "🌵"],
+  faces: ["😀", "😎", "🤩", "😍"],
 };
 
 function Game() {
-  const [gameState, setGameState] = useState('setup');
+  const [gameState, setGameState] = useState("setup");
   const [board, setBoard] = useState(Array(9).fill(null));
-  const [player1, setPlayer1] = useState({ 
-    category: null, 
-    emojis: [], 
+  const [player1, setPlayer1] = useState({
+    category: null,
+    emojis: [],
     score: 0,
-    emojiHistory: [] // Track order of emoji placements
+    emojiHistory: [], // Track order of emoji placements
   });
-  const [player2, setPlayer2] = useState({ 
-    category: null, 
-    emojis: [], 
+  const [player2, setPlayer2] = useState({
+    category: null,
+    emojis: [],
     score: 0,
-    emojiHistory: [] // Track order of emoji placements
+    emojiHistory: [], // Track order of emoji placements
   });
   const [currentPlayer, setCurrentPlayer] = useState(1);
   const [winner, setWinner] = useState(null);
@@ -33,9 +33,19 @@ function Game() {
 
   // Start the game
   const startGame = (p1Category, p2Category) => {
-    setPlayer1({ ...player1, category: p1Category, emojis: [], emojiHistory: [] });
-    setPlayer2({ ...player2, category: p2Category, emojis: [], emojiHistory: [] });
-    setGameState('playing');
+    setPlayer1({
+      ...player1,
+      category: p1Category,
+      emojis: [],
+      emojiHistory: [],
+    });
+    setPlayer2({
+      ...player2,
+      category: p2Category,
+      emojis: [],
+      emojiHistory: [],
+    });
+    setGameState("playing");
     setCurrentPlayer(1);
     setBoard(Array(9).fill(null));
     setWinner(null);
@@ -44,7 +54,7 @@ function Game() {
 
   // Handle cell click with perfect vanishing logic
   const handleCellClick = (index) => {
-    if (gameState !== 'playing' || board[index] !== null) return;
+    if (gameState !== "playing" || board[index] !== null) return;
 
     const currentPlayerData = currentPlayer === 1 ? player1 : player2;
     const category = currentPlayerData.category;
@@ -54,39 +64,54 @@ function Game() {
     let newEmojis = [...currentPlayerData.emojis];
     let newEmojiHistory = [...currentPlayerData.emojiHistory];
     let newBoard = [...board];
-    
+
     // Check if player already has 3 emojis on the board
     if (newEmojis.length === 3) {
       // Get the oldest emoji (first in history)
       const oldestEmoji = newEmojiHistory[0];
-      
+
       // Find its position on the board
       const oldestEmojiIndex = board.findIndex(
-        cell => cell && cell.emoji === oldestEmoji.emoji && cell.player === currentPlayer
+        (cell) =>
+          cell &&
+          cell.emoji === oldestEmoji.emoji &&
+          cell.player === currentPlayer
       );
-      
+
       // Only proceed if we found the oldest emoji and it's not in the same position we're trying to place
       if (oldestEmojiIndex !== -1 && oldestEmojiIndex !== index) {
         // Set vanishing emoji for animation
-        setVanishingEmoji({ index: oldestEmojiIndex, emoji: board[oldestEmojiIndex].emoji });
-        
+        setVanishingEmoji({
+          index: oldestEmojiIndex,
+          emoji: board[oldestEmojiIndex].emoji,
+        });
+
         // Wait for animation to complete before updating state
         setTimeout(() => {
           // Update board - remove oldest emoji
           newBoard[oldestEmojiIndex] = null;
           setBoard(newBoard);
-          
+
           // Remove from player's emoji list and history
-          newEmojis = newEmojis.filter(e => e.emoji !== oldestEmoji.emoji || e.position !== oldestEmojiIndex);
+          newEmojis = newEmojis.filter(
+            (e) =>
+              e.emoji !== oldestEmoji.emoji || e.position !== oldestEmojiIndex
+          );
           newEmojiHistory = newEmojiHistory.slice(1);
-          
+
           // Now add the new emoji
-          updateGameState(newEmojis, newEmojiHistory, randomEmoji, index, newBoard);
+          updateGameState(
+            newEmojis,
+            newEmojiHistory,
+            randomEmoji,
+            index,
+            newBoard
+          );
         }, 300);
         return;
       } else if (oldestEmojiIndex === index) {
         // Can't place new emoji where oldest one was, show feedback
-        setRecentEmoji({ index, emoji: '❌', player: currentPlayer });
+        setRecentEmoji({ index, emoji: "❌", player: currentPlayer });
         setTimeout(() => setRecentEmoji(null), 500);
         return;
       }
@@ -97,17 +122,26 @@ function Game() {
   };
 
   // Update game state after move
-  const updateGameState = (newEmojis, newEmojiHistory, randomEmoji, index, newBoard) => {
+  const updateGameState = (
+    newEmojis,
+    newEmojiHistory,
+    randomEmoji,
+    index,
+    newBoard
+  ) => {
     const currentPlayerData = currentPlayer === 1 ? player1 : player2;
-    
+
     // Add to emoji history (for FIFO tracking)
-    const updatedEmojiHistory = [...newEmojiHistory, { emoji: randomEmoji, position: index }];
+    const updatedEmojiHistory = [
+      ...newEmojiHistory,
+      { emoji: randomEmoji, position: index },
+    ];
     const trimmedEmojiHistory = updatedEmojiHistory.slice(-3); // Keep only last 3
 
     const updatedPlayer = {
       ...currentPlayerData,
       emojis: [...newEmojis, { emoji: randomEmoji, position: index }].slice(-3), // Also keep only last 3
-      emojiHistory: trimmedEmojiHistory
+      emojiHistory: trimmedEmojiHistory,
     };
 
     if (currentPlayer === 1) {
@@ -133,7 +167,7 @@ function Game() {
         } else {
           setPlayer2({ ...updatedPlayer, score: updatedPlayer.score + 1 });
         }
-        setGameState('gameover');
+        setGameState("gameover");
       }, 500);
       return;
     }
@@ -148,15 +182,22 @@ function Game() {
   // Check for winning condition
   const checkWinner = (board, player) => {
     const winPatterns = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-      [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-      [0, 4, 8], [2, 4, 6]             // diagonals
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8], // rows
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8], // columns
+      [0, 4, 8],
+      [2, 4, 6], // diagonals
     ];
 
     for (const pattern of winPatterns) {
-      if (pattern.every(index => {
-        return board[index] !== null && board[index].player === player;
-      })) {
+      if (
+        pattern.every((index) => {
+          return board[index] !== null && board[index].player === player;
+        })
+      ) {
         return pattern;
       }
     }
@@ -171,27 +212,27 @@ function Game() {
     setCurrentPlayer(1);
     setWinner(null);
     setWinningCells([]);
-    setGameState('playing');
+    setGameState("playing");
   };
 
   // Return to setup screen
   const returnToSetup = () => {
-    setGameState('setup');
+    setGameState("setup");
   };
 
   return (
     <div className="app">
       <div className="game-wrapper">
         <h1 className="game-title">✨ Blink Tac Toe ✨</h1>
-        
-        <button 
-          className="help-button" 
+
+        <button
+          className="help-button"
           onClick={() => setShowHelp(!showHelp)}
           aria-label="Help"
         >
-          {showHelp ? '✕ Close' : '❓ Help'}
+          {showHelp ? "✕ Close" : "❓ Help"}
         </button>
-        
+
         {showHelp && (
           <div className="help-section slide-in">
             <h3>How to Play</h3>
@@ -206,18 +247,23 @@ function Game() {
           </div>
         )}
 
-        {gameState === 'setup' && (
+        {gameState === "setup" && (
           <div className="setup-screen fade-in">
             <h2>Select Emoji Categories</h2>
             <div className="player-selection">
-              <div className={`player-setup ${player1.category ? 'selected' : ''}`}>
+              <div
+                className={`player-setup ${player1.category ? "selected" : ""}`}
+              >
                 <h3>Player 1</h3>
                 <div className="category-buttons">
-                  {Object.keys(EMOJI_CATEGORIES).map(category => (
-                    <button 
+                  {Object.keys(EMOJI_CATEGORIES).map((category) => (
+                    <button
                       key={`p1-${category}`}
                       onClick={() => setPlayer1({ ...player1, category })}
-                      className={`category-btn ${player1.category === category ? 'selected pulse' : ''}`}
+                      className={`category-btn ${
+                        player1.category === category ? "selected pulse" : ""
+                      } ${player2.category === category ? "disabled" : ""}`}
+                      disabled={player2.category === category}
                     >
                       {category}
                     </button>
@@ -225,19 +271,23 @@ function Game() {
                 </div>
                 {player1.category && (
                   <div className="emoji-preview bounce">
-                    {EMOJI_CATEGORIES[player1.category].join(' ')}
+                    {EMOJI_CATEGORIES[player1.category].join(" ")}
                   </div>
                 )}
               </div>
-              
-              <div className={`player-setup ${player2.category ? 'selected' : ''}`}>
+
+              <div
+                className={`player-setup ${player2.category ? "selected" : ""}`}
+              >
                 <h3>Player 2</h3>
                 <div className="category-buttons">
-                  {Object.keys(EMOJI_CATEGORIES).map(category => (
-                    <button 
+                  {Object.keys(EMOJI_CATEGORIES).map((category) => (
+                    <button
                       key={`p2-${category}`}
                       onClick={() => setPlayer2({ ...player2, category })}
-                      className={`category-btn ${player2.category === category ? 'selected pulse' : ''} ${player1.category === category ? 'disabled' : ''}`}
+                      className={`category-btn ${
+                        player2.category === category ? "selected pulse" : ""
+                      } ${player1.category === category ? "disabled" : ""}`}
                       disabled={player1.category === category}
                     >
                       {category}
@@ -246,13 +296,13 @@ function Game() {
                 </div>
                 {player2.category && (
                   <div className="emoji-preview bounce">
-                    {EMOJI_CATEGORIES[player2.category].join(' ')}
+                    {EMOJI_CATEGORIES[player2.category].join(" ")}
                   </div>
                 )}
               </div>
             </div>
-            
-            <button 
+
+            <button
               className="start-button glow"
               onClick={() => startGame(player1.category, player2.category)}
               disabled={!player1.category || !player2.category}
@@ -262,10 +312,16 @@ function Game() {
           </div>
         )}
 
-        {(gameState === 'playing' || gameState === 'gameover') && (
+        {(gameState === "playing" || gameState === "gameover") && (
           <div className="game-container scale-in">
             <div className="score-board">
-              <div className={`player-score ${currentPlayer === 1 && gameState === 'playing' ? 'active pulse' : ''}`}>
+              <div
+                className={`player-score ${
+                  currentPlayer === 1 && gameState === "playing"
+                    ? "active pulse"
+                    : ""
+                }`}
+              >
                 <h3>Player 1</h3>
                 <p className="score">⭐ {player1.score}</p>
                 <p className="category">{player1.category}</p>
@@ -273,9 +329,9 @@ function Game() {
                   {player1.emojis.length}/3 emojis
                 </div>
               </div>
-              
+
               <div className="game-status">
-                {gameState === 'gameover' ? (
+                {gameState === "gameover" ? (
                   <h2 className="win-message zoom-in">
                     Player {winner} Wins! 🎉
                     <div className="confetti"></div>
@@ -283,12 +339,22 @@ function Game() {
                 ) : (
                   <h2 className="turn-message">
                     Player {currentPlayer}'s Turn
-                    <div className={`arrow ${currentPlayer === 1 ? 'left' : 'right'}`}></div>
+                    <div
+                      className={`arrow ${
+                        currentPlayer === 1 ? "left" : "right"
+                      }`}
+                    ></div>
                   </h2>
                 )}
               </div>
-              
-              <div className={`player-score ${currentPlayer === 2 && gameState === 'playing' ? 'active pulse' : ''}`}>
+
+              <div
+                className={`player-score ${
+                  currentPlayer === 2 && gameState === "playing"
+                    ? "active pulse"
+                    : ""
+                }`}
+              >
                 <h3>Player 2</h3>
                 <p className="score">⭐ {player2.score}</p>
                 <p className="category">{player2.category}</p>
@@ -297,16 +363,22 @@ function Game() {
                 </div>
               </div>
             </div>
-            
+
             <div className="board">
               {board.map((cell, index) => (
-                <div 
+                <div
                   key={index}
-                  className={`cell ${cell ? `player-${cell.player}` : ''} ${gameState === 'gameover' ? 'game-over' : ''} ${winningCells.includes(index) ? 'winning-cell' : ''}`}
+                  className={`cell ${cell ? `player-${cell.player}` : ""} ${
+                    gameState === "gameover" ? "game-over" : ""
+                  } ${winningCells.includes(index) ? "winning-cell" : ""}`}
                   onClick={() => handleCellClick(index)}
                 >
                   {cell ? (
-                    <span className={`emoji ${vanishingEmoji?.index === index ? 'vanishing' : 'pop-in'}`}>
+                    <span
+                      className={`emoji ${
+                        vanishingEmoji?.index === index ? "vanishing" : "pop-in"
+                      }`}
+                    >
                       {cell.emoji}
                     </span>
                   ) : null}
@@ -318,13 +390,16 @@ function Game() {
                 </div>
               ))}
             </div>
-            
-            {gameState === 'gameover' && (
+
+            {gameState === "gameover" && (
               <div className="game-over-actions fade-in">
                 <button className="play-again-btn glow" onClick={playAgain}>
                   🔄 Play Again
                 </button>
-                <button className="change-categories-btn" onClick={returnToSetup}>
+                <button
+                  className="change-categories-btn"
+                  onClick={returnToSetup}
+                >
                   🎨 Change Categories
                 </button>
               </div>
