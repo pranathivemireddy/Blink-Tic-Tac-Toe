@@ -56,7 +56,7 @@ function Game() {
     let newBoard = [...board];
     
     // Check if player already has 3 emojis on the board
-    if (newEmojis.length >= 3) {
+    if (newEmojis.length === 3) {
       // Get the oldest emoji (first in history)
       const oldestEmoji = newEmojiHistory[0];
       
@@ -102,12 +102,12 @@ function Game() {
     
     // Add to emoji history (for FIFO tracking)
     const updatedEmojiHistory = [...newEmojiHistory, { emoji: randomEmoji, position: index }];
-    
-    // Update player's emoji list
+    const trimmedEmojiHistory = updatedEmojiHistory.slice(-3); // Keep only last 3
+
     const updatedPlayer = {
       ...currentPlayerData,
-      emojis: [...newEmojis, { emoji: randomEmoji, position: index }],
-      emojiHistory: updatedEmojiHistory
+      emojis: [...newEmojis, { emoji: randomEmoji, position: index }].slice(-3), // Also keep only last 3
+      emojiHistory: trimmedEmojiHistory
     };
 
     if (currentPlayer === 1) {
